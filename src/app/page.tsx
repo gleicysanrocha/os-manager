@@ -14,8 +14,7 @@ import {
   updateDoc, 
   deleteDoc,
   doc, 
-  serverTimestamp,
-  orderBy
+  serverTimestamp
 } from 'firebase/firestore';
 import { 
   ClipboardList, 
@@ -28,7 +27,6 @@ import {
   AlertCircle, 
   Filter, 
   MessageSquare, 
-  Share2, 
   Settings, 
   X, 
   FileText, 
@@ -666,7 +664,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-905 transition-colors duration-300">
         <div className="h-12 w-12 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent"></div>
       </div>
     );
@@ -675,9 +673,9 @@ export default function Dashboard() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300 flex flex-col">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-300 flex flex-col">
       {/* Header */}
-      <header className="border-b border-slate-200 dark:border-slate-900 bg-white/70 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-40">
+      <header className="border-b border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-indigo-600/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center ring-1 ring-indigo-500/20">
@@ -690,7 +688,7 @@ export default function Dashboard() {
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="hidden sm:flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/40 px-3 py-1.5 rounded-lg ring-1 ring-slate-200 dark:ring-white/5">
+            <div className="hidden sm:flex items-center gap-2 text-sm text-slate-655 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/40 px-3 py-1.5 rounded-lg ring-1 ring-slate-200 dark:ring-white/5">
               <User className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
               <span>{user.email}</span>
             </div>
@@ -714,7 +712,7 @@ export default function Dashboard() {
 
             <button
               onClick={logout}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-rose-500 dark:text-rose-400 hover:text-rose-600 dark:hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition duration-200"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-rose-500 dark:text-rose-455 hover:text-rose-600 dark:hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition duration-200"
             >
               <LogOut className="h-4 w-4" />
               <span className="hidden sm:inline">Sair</span>
@@ -727,12 +725,12 @@ export default function Dashboard() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         
         {/* Navigation Tabs (Service Spaces) */}
-        <div className="flex border-b border-slate-200 dark:border-slate-900 overflow-x-auto scrollbar-none gap-2 pb-px">
+        <div className="flex border-b border-slate-200 dark:border-slate-850 overflow-x-auto scrollbar-none gap-2 pb-px">
           <button
             onClick={() => setActiveTab('Geral')}
             className={`whitespace-nowrap px-4 py-2.5 text-sm font-medium border-b-2 transition duration-200 focus:outline-none ${
               activeTab === 'Geral'
-                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400 font-semibold'
+                ? 'border-indigo-500 text-indigo-650 dark:text-indigo-400 font-semibold'
                 : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
@@ -744,7 +742,7 @@ export default function Dashboard() {
               onClick={() => setActiveTab(type.name)}
               className={`whitespace-nowrap px-4 py-2.5 text-sm font-medium border-b-2 transition duration-200 focus:outline-none ${
                 activeTab === type.name
-                  ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400 font-semibold'
+                  ? 'border-indigo-500 text-indigo-605 dark:text-indigo-400 font-semibold'
                   : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
@@ -761,7 +759,7 @@ export default function Dashboard() {
               <TrendingUp className="h-16 w-16 text-indigo-600 dark:text-indigo-400" />
             </div>
             <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-indigo-500/10 text-indigo-650 dark:text-indigo-400 flex items-center justify-center ring-1 ring-indigo-500/20">
+              <div className="h-12 w-12 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center ring-1 ring-indigo-500/20">
                 <Calendar className="h-6 w-6" />
               </div>
               <div>
@@ -777,7 +775,7 @@ export default function Dashboard() {
               <CheckCircle2 className="h-16 w-16 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-emerald-500/10 text-emerald-650 dark:text-emerald-400 flex items-center justify-center ring-1 ring-emerald-500/20">
+              <div className="h-12 w-12 rounded-xl bg-emerald-500/10 text-emerald-605 dark:text-emerald-400 flex items-center justify-center ring-1 ring-emerald-500/20">
                 <DollarSign className="h-6 w-6" />
               </div>
               <div>
@@ -793,7 +791,7 @@ export default function Dashboard() {
               <Clock className="h-16 w-16 text-amber-600 dark:text-amber-400" />
             </div>
             <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-amber-500/10 text-amber-655 dark:text-amber-400 flex items-center justify-center ring-1 ring-amber-500/20">
+              <div className="h-12 w-12 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center ring-1 ring-amber-500/20">
                 <AlertCircle className="h-6 w-6" />
               </div>
               <div>
@@ -805,10 +803,10 @@ export default function Dashboard() {
         </section>
 
         {/* Professional Analytics Panel */}
-        <div className="bg-white dark:bg-slate-900/40 backdrop-blur-sm border border-slate-200 dark:border-slate-900 rounded-3xl p-6 shadow-md dark:shadow-xl grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white dark:bg-slate-900/40 backdrop-blur-sm border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-md dark:shadow-xl grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="md:col-span-2 space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-indigo-650 dark:text-indigo-400">
                 Adimplência / Recebimento - {activeTab}
               </h3>
               <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
@@ -825,7 +823,7 @@ export default function Dashboard() {
               </div>
             </div>
             <p className="text-xs text-slate-500 leading-relaxed">
-              Demonstrativo de faturamento recebido versus pendente para o espaço <strong className="text-slate-700 dark:text-slate-300">{activeTab}</strong>.
+              Demonstrativo de faturamento recebido versus pendente para o espaço <strong className="text-slate-750 dark:text-slate-300">{activeTab}</strong>.
             </p>
           </div>
 
@@ -844,12 +842,12 @@ export default function Dashboard() {
         {/* Action Grid (New Entry Form + Management) */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* New/Edit Entry Form */}
-          <div className="lg:col-span-1 bg-white dark:bg-slate-900/40 backdrop-blur-sm border border-slate-200 dark:border-slate-900 rounded-3xl p-6 shadow-md dark:shadow-xl space-y-6">
-            <div className="flex items-center gap-2 pb-4 border-b border-slate-200 dark:border-slate-800">
+          <div className="lg:col-span-1 bg-white dark:bg-slate-900/40 backdrop-blur-sm border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-md dark:shadow-xl space-y-6">
+            <div className="flex items-center gap-2 pb-4 border-b border-slate-200 dark:border-slate-850">
               {editingId ? (
-                <Pencil className="h-5 w-5 text-indigo-650 dark:text-indigo-400 animate-pulse" />
+                <Pencil className="h-5 w-5 text-indigo-600 dark:text-indigo-400 animate-pulse" />
               ) : (
-                <Plus className="h-5 w-5 text-indigo-650 dark:text-indigo-400" />
+                <Plus className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
               )}
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                 {editingId ? 'Editar Lançamento' : 'Novo Lançamento Rápido'}
@@ -893,7 +891,7 @@ export default function Dashboard() {
                   onChange={(e) => setOsNumber(e.target.value)}
                   placeholder="Ex: 2026-001"
                   required={isOSRequired}
-                  className="mt-1.5 block w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-650"
+                  className="mt-1.5 block w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500"
                 />
               </div>
 
@@ -905,7 +903,7 @@ export default function Dashboard() {
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
                   placeholder="0,00"
-                  className="mt-1.5 block w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-650 font-semibold"
+                  className="mt-1.5 block w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 font-semibold"
                 />
               </div>
 
@@ -918,7 +916,7 @@ export default function Dashboard() {
                   onChange={(e) => setNotes(e.target.value)}
                   rows={2}
                   placeholder={serviceType === 'Outros' ? 'Detalhes adicionais, descrição do serviço ou do produto...' : 'Detalhes ou observações adicionais...'}
-                  className="block w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-slate-800 dark:text-slate-200 placeholder-slate-450 dark:placeholder-slate-650 text-sm"
+                  className="block w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 text-sm"
                 />
                 
                 {/* Quick note templates */}
@@ -941,12 +939,12 @@ export default function Dashboard() {
                         value={newQuickNote}
                         onChange={(e) => setNewQuickNote(e.target.value)}
                         placeholder="Nova observação..."
-                        className="text-[11px] px-2 py-0.5 bg-slate-50 dark:bg-slate-955 border border-slate-250 dark:border-slate-850 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600"
+                        className="text-[11px] px-2 py-0.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none placeholder-slate-400 dark:placeholder-slate-650"
                       />
                       <button
                         type="button"
                         onClick={handleAddQuickNote}
-                        className="text-[10px] bg-indigo-650 text-white px-2 py-0.5 rounded-lg hover:bg-indigo-600 transition font-medium"
+                        className="text-[10px] bg-indigo-600 text-white px-2 py-0.5 rounded-lg hover:bg-indigo-550 transition font-medium"
                       >
                         Salvar
                       </button>
@@ -1038,7 +1036,7 @@ export default function Dashboard() {
                     className="block w-full px-2.5 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-slate-800 dark:text-slate-200 text-xs font-semibold"
                   />
                   {value && partialAmount && (
-                    <div className="text-[10px] text-slate-550 dark:text-slate-400 font-medium">
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
                       Resta pagar: {formatCurrency(Math.max(0, parseFloat(value.replace(',', '.')) - parseFloat(partialAmount.replace(',', '.')) || 0))}
                     </div>
                   )}
@@ -1047,7 +1045,7 @@ export default function Dashboard() {
 
               <button
                 type="submit"
-                className="w-full mt-4 flex items-center justify-center gap-2 rounded-xl bg-indigo-650 py-3 text-sm font-semibold text-white shadow-lg hover:bg-indigo-600 transition-all duration-200"
+                className="w-full mt-4 flex items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white shadow-lg hover:bg-indigo-500 transition-all duration-200"
               >
                 {editingId ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                 {editingId ? 'Salvar Alterações' : 'Salvar Lançamento'}
@@ -1066,12 +1064,12 @@ export default function Dashboard() {
           </div>
 
           {/* Interactive List and Filters */}
-          <div className="lg:col-span-2 bg-white dark:bg-slate-900/40 backdrop-blur-sm border border-slate-200 dark:border-slate-900 rounded-3xl p-6 shadow-md dark:shadow-xl flex flex-col">
+          <div className="lg:col-span-2 bg-white dark:bg-slate-900/40 backdrop-blur-sm border border-slate-200 dark:border-slate-850 rounded-3xl p-6 shadow-md dark:shadow-xl flex flex-col">
             
             {/* Filter controls */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-2">
-                <Filter className="h-5 w-5 text-slate-555 dark:text-slate-400" />
+                <Filter className="h-5 w-5 text-slate-500" />
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Lançamentos</h2>
               </div>
 
@@ -1105,8 +1103,8 @@ export default function Dashboard() {
                       onClick={() => setStatusFilter(s)}
                       className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
                         statusFilter === s
-                          ? 'bg-indigo-650 text-white shadow'
-                          : 'text-slate-500 dark:text-slate-400 hover:text-slate-850 dark:hover:text-slate-200'
+                          ? 'bg-indigo-600 text-white shadow'
+                          : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                       }`}
                     >
                       {s}
@@ -1120,7 +1118,7 @@ export default function Dashboard() {
                   className={`flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-xl transition duration-200 ${
                     copiedMessage
                       ? 'bg-emerald-600 text-white'
-                      : 'bg-indigo-600/10 dark:bg-indigo-600/20 text-indigo-650 dark:text-indigo-400 hover:bg-indigo-650 hover:text-white dark:hover:bg-indigo-600 dark:hover:text-white border border-indigo-200 dark:border-indigo-500/10'
+                      : 'bg-indigo-600/10 dark:bg-indigo-600/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:text-white border border-indigo-200 dark:border-indigo-500/10'
                   }`}
                   title="Copiar cobrança para WhatsApp"
                 >
@@ -1158,9 +1156,9 @@ export default function Dashboard() {
                 </div>
               ) : filteredEntries.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <FileText className="h-12 w-12 text-slate-350 dark:text-slate-750 mb-3" />
+                  <FileText className="h-12 w-12 text-slate-300 dark:text-slate-700 mb-3" />
                   <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400">Nenhum lançamento encontrado</h3>
-                  <p className="text-xs text-slate-450 dark:text-slate-650 mt-1">Experimente alterar os filtros ou registrar um novo serviço.</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-600 mt-1">Experimente alterar os filtros ou registrar um novo serviço.</p>
                 </div>
               ) : (
                 <table className="w-full text-left border-collapse min-w-[600px]">
@@ -1183,7 +1181,7 @@ export default function Dashboard() {
                         <td className="py-3.5 px-4">
                           <div className="font-semibold text-slate-900 dark:text-white">{entry.serviceType}</div>
                           {entry.osNumber && (
-                            <span className="text-[10px] bg-slate-100 dark:bg-slate-950 text-slate-550 dark:text-slate-400 px-1.5 py-0.5 rounded ring-1 ring-slate-200 dark:ring-white/5 font-mono">
+                            <span className="text-[10px] bg-slate-100 dark:bg-slate-950 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded ring-1 ring-slate-200 dark:ring-white/5 font-mono">
                               OS: {entry.osNumber}
                             </span>
                           )}
@@ -1231,14 +1229,14 @@ export default function Dashboard() {
                         <td className="py-3.5 px-4 text-right">
                           <button
                             onClick={() => handleStartEdit(entry)}
-                            className="p-1 text-slate-400 hover:text-indigo-600 dark:text-slate-600 dark:hover:text-indigo-400 rounded transition duration-200 mr-2 md:opacity-0 md:group-hover:opacity-100"
+                            className="p-1 text-slate-400 hover:text-indigo-600 dark:text-slate-500 dark:hover:text-indigo-400 rounded transition duration-200 mr-2 md:opacity-0 md:group-hover:opacity-100"
                             title="Editar lançamento"
                           >
                             <Pencil className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleDeleteEntry(entry.id)}
-                            className="p-1 text-slate-400 hover:text-rose-500 dark:text-slate-600 dark:hover:text-rose-455 rounded transition duration-200 md:opacity-0 md:group-hover:opacity-100"
+                            className="p-1 text-slate-400 hover:text-rose-500 dark:text-slate-550 dark:hover:text-rose-400 rounded transition duration-200 md:opacity-0 md:group-hover:opacity-100"
                             title="Excluir lançamento"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -1275,12 +1273,12 @@ export default function Dashboard() {
               {serviceTypes.map((type) => (
                 <div
                   key={type.id}
-                  className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 hover:border-slate-350 dark:hover:border-slate-800 transition"
+                  className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-705 transition"
                 >
                   <div>
                     <span className="font-semibold">{type.name}</span>
                     {type.osRequired && (
-                      <span className="ml-2 text-[10px] bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 px-1.5 py-0.5 rounded-full font-medium">
+                      <span className="ml-2 text-[10px] bg-rose-500/10 text-rose-600 dark:text-rose-455 border border-rose-500/20 px-1.5 py-0.5 rounded-full font-medium">
                         OS Obrigatória
                       </span>
                     )}
@@ -1289,7 +1287,7 @@ export default function Dashboard() {
                     <button
                       type="button"
                       onClick={() => handleDeleteServiceType(type.id, type.name)}
-                      className="p-1 text-slate-455 hover:text-rose-500 transition"
+                      className="p-1 text-slate-500 hover:text-rose-500 transition"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -1312,7 +1310,7 @@ export default function Dashboard() {
                     value={newTypeName}
                     onChange={(e) => setNewTypeName(e.target.value)}
                     placeholder="Ex: Consultoria"
-                    className="mt-1.5 block w-full px-3 py-2 bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-855 rounded-xl focus:ring-1 focus:ring-indigo-500 focus:outline-none text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600"
+                    className="mt-1.5 block w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-1 focus:ring-indigo-500 focus:outline-none text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600"
                   />
                 </div>
 
@@ -1322,7 +1320,7 @@ export default function Dashboard() {
                       type="checkbox"
                       checked={newTypeOSRequired}
                       onChange={(e) => setNewTypeOSRequired(e.target.checked)}
-                      className="rounded border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-indigo-650 dark:text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+                      className="rounded border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-955 text-indigo-600 dark:text-indigo-600 focus:ring-indigo-500 h-4 w-4"
                     />
                     Requer número da OS
                   </label>
@@ -1331,7 +1329,7 @@ export default function Dashboard() {
 
               <button
                 type="submit"
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-650 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-indigo-600 transition-all duration-200"
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-indigo-500 transition-all duration-200"
               >
                 <Plus className="h-4 w-4" />
                 Adicionar Tipo
@@ -1346,13 +1344,13 @@ export default function Dashboard() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fade-in">
           <div className="w-full max-w-sm rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4 text-slate-900 dark:text-white">
             <h3 className="text-base font-bold">Atualizar Pagamento</h3>
-            <p className="text-xs text-slate-550 dark:text-slate-400">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Ajuste o status e informações de pagamento para o serviço <strong className="text-slate-800 dark:text-slate-200">{payingEntry.serviceType}</strong>.
             </p>
             
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Status</label>
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 tracking-wider mb-1.5">Status</label>
                 <div className="grid grid-cols-3 gap-2">
                   {(['Pendente', 'Pago', 'Pago Parcialmente'] as const).map((s) => (
                     <button
@@ -1378,7 +1376,7 @@ export default function Dashboard() {
               {payingStatus !== 'Pendente' && (
                 <div className="grid grid-cols-2 gap-3 animate-fade-in">
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Método</label>
+                    <label className="block text-xs font-medium text-slate-555 dark:text-slate-400 tracking-wider">Método</label>
                     <select
                       value={payingMethod || 'Pix'}
                       onChange={(e) => setPayingMethod(e.target.value as any)}
@@ -1390,7 +1388,7 @@ export default function Dashboard() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Data do Pago</label>
+                    <label className="block text-xs font-medium text-slate-555 dark:text-slate-400 tracking-wider">Data do Pago</label>
                     <input
                       type="date"
                       required
@@ -1404,7 +1402,7 @@ export default function Dashboard() {
 
               {payingStatus === 'Pago Parcialmente' && (
                 <div className="animate-fade-in space-y-1.5">
-                  <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Valor Pago (R$)</label>
+                  <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 tracking-wider">Valor Pago (R$)</label>
                   <input
                     type="text"
                     required
@@ -1414,7 +1412,7 @@ export default function Dashboard() {
                     className="block w-full px-2.5 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-slate-800 dark:text-slate-200 text-xs font-semibold"
                   />
                   {payingEntry && payingPartialAmount && (
-                    <div className="text-[10px] text-slate-550 dark:text-slate-400 font-medium">
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
                       Resta pagar: {formatCurrency(Math.max(0, payingEntry.value - parseFloat(payingPartialAmount.replace(',', '.')) || 0))}
                     </div>
                   )}
@@ -1426,14 +1424,14 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={() => setPayingEntry(null)}
-                className="flex-1 py-2 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-850 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-350 transition"
+                className="flex-1 py-2 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={handleSavePaymentDetails}
-                className="flex-1 py-2 text-xs font-semibold rounded-xl bg-indigo-650 text-white hover:bg-indigo-600 transition"
+                className="flex-1 py-2 text-xs font-semibold rounded-xl bg-indigo-600 text-white hover:bg-indigo-500 transition"
               >
                 Confirmar
               </button>
