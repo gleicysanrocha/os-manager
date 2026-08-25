@@ -35,7 +35,10 @@ import {
   User,
   Pencil,
   Sun,
-  Moon
+  Moon,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 
 interface OSEntry {
@@ -96,6 +99,10 @@ export default function Dashboard() {
   const [startDateFilter, setStartDateFilter] = useState<string>(''); // YYYY-MM-DD
   const [endDateFilter, setEndDateFilter] = useState<string>(''); // YYYY-MM-DD
   const [osNumberFilter, setOsNumberFilter] = useState<string>('');
+
+  // Sort State
+  const [sortField, setSortField] = useState<'date' | 'serviceType' | 'value' | 'notes' | 'status'>('date');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   // Clipboard feedback
   const [copiedMessage, setCopiedMessage] = useState(false);
@@ -470,6 +477,47 @@ export default function Dashboard() {
                        
     return matchesStatus && matchesMonth && matchesStartDate && matchesEndDate && matchesOSNumber && matchesTab;
   });
+
+  // Sort entries
+  const sortedEntries = [...filteredEntries].sort((a, b) => {
+    let valA: any = a[sortField];
+    let valB: any = b[sortField];
+
+    if (valA === undefined || valA === null) valA = '';
+    if (valB === undefined || valB === null) valB = '';
+
+    if (typeof valA === 'string' && typeof valB === 'string') {
+      return sortDirection === 'asc' 
+        ? valA.localeCompare(valB) 
+        : valB.localeCompare(valA);
+    }
+
+    if (typeof valA === 'number' && typeof valB === 'number') {
+      return sortDirection === 'asc' ? valA - valB : valB - valA;
+    }
+
+    return sortDirection === 'asc'
+      ? String(valA).localeCompare(String(valB))
+      : String(valB).localeCompare(String(valA));
+  });
+
+  const handleSort = (field: 'date' | 'serviceType' | 'value' | 'notes' | 'status') => {
+    if (sortField === field) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const renderSortIcon = (field: 'date' | 'serviceType' | 'value' | 'notes' | 'status') => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="inline h-3.5 w-3.5 ml-1 opacity-40 group-hover:opacity-100 transition-opacity" />;
+    }
+    return sortDirection === 'asc'
+      ? <ArrowUp className="inline h-3.5 w-3.5 ml-1 text-indigo-500" />
+      : <ArrowDown className="inline h-3.5 w-3.5 ml-1 text-indigo-500" />;
+  };
 
   // Calculate Advanced Professional Metrics
   const countEntries = filteredEntries.length;
@@ -1226,16 +1274,36 @@ export default function Dashboard() {
                 <table className="w-full text-left border-collapse min-w-[600px]">
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-slate-900 text-xs font-medium text-slate-500 dark:text-slate-500 uppercase tracking-wider">
-                      <th className="py-3 px-4">Data</th>
-                      <th className="py-3 px-4">Serviço / OS</th>
-                      <th className="py-3 px-4">Valor</th>
-                      <th className="py-3 px-4">Observação</th>
-                      <th className="py-3 px-4 text-center">Status</th>
-                      <th className="py-3 px-4 text-right">Ações</th>
+                      <th className="py-3 px-4 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 select-none group" onClick={() => handleSort('date')}>
+                        <div className="flex items-center">
+                          Data {renderSortIcon('date')}
+                        </div>
+                      </th>
+                      <th className="py-3 px-4 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 select-none group" onClick={() => handleSort('serviceType')}>
+                        <div className="flex items-center">
+                          Serviço / OS {renderSortIcon('serviceType')}
+                        </div>
+                      </th>
+                      <th className="py-3 px-4 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 select-none group" onClick={() => handleSort('value')}>
+                        <div className="flex items-center">
+                          Valor {renderSortIcon('value')}
+                        </div>
+                      </th>
+                      <th className="py-3 px-4 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 select-none group" onClick={() => handleSort('notes')}>
+                        <div className="flex items-center">
+                          Observação {renderSortIcon('notes')}
+                        </div>
+                      </th>
+                      <th className="py-3 px-4 text-center cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 select-none group" onClick={() => handleSort('status')}>
+                        <div className="flex items-center justify-center">
+                          Status {renderSortIcon('status')}
+                        </div>
+                      </th>
+                      <th className="py-3 px-4 text-right select-none">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200 dark:divide-slate-900 text-sm">
-                    {filteredEntries.map((entry) => (
+                    {sortedEntries.map((entry) => (
                       <tr key={entry.id} className="hover:bg-slate-100/30 dark:hover:bg-slate-900/20 group transition">
                         <td className="py-3.5 px-4 font-medium text-slate-700 dark:text-slate-300">
                           {formatDate(entry.date)}
