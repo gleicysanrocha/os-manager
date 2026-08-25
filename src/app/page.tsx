@@ -93,6 +93,9 @@ export default function Dashboard() {
   // Filter State
   const [statusFilter, setStatusFilter] = useState<'Todos' | 'Pago' | 'Pendente'>('Todos');
   const [monthFilter, setMonthFilter] = useState<string>(''); // YYYY-MM
+  const [startDateFilter, setStartDateFilter] = useState<string>(''); // YYYY-MM-DD
+  const [endDateFilter, setEndDateFilter] = useState<string>(''); // YYYY-MM-DD
+  const [osNumberFilter, setOsNumberFilter] = useState<string>('');
 
   // Clipboard feedback
   const [copiedMessage, setCopiedMessage] = useState(false);
@@ -447,12 +450,25 @@ export default function Dashboard() {
   // Filter entries
   const filteredEntries = entries.filter((entry) => {
     const matchesStatus = statusFilter === 'Todos' || entry.status === statusFilter;
+    
+    // Filtro por Mês (ignorado se houver filtro de data específica)
     const entryMonth = entry.date.substring(0, 7); // YYYY-MM
     const matchesMonth = !monthFilter || entryMonth === monthFilter;
+    
+    // Filtro por Data Inicial (se fornecido)
+    const matchesStartDate = !startDateFilter || entry.date >= startDateFilter;
+    
+    // Filtro por Data Final (se fornecido)
+    const matchesEndDate = !endDateFilter || entry.date <= endDateFilter;
+    
+    // Filtro por Nº da OS (se fornecido, case-insensitive)
+    const matchesOSNumber = !osNumberFilter || (entry.osNumber && entry.osNumber.toLowerCase().includes(osNumberFilter.toLowerCase()));
+    
     const matchesTab = activeTab === 'Geral' || 
                        entry.serviceType === activeTab || 
                        (activeTab === 'Outros' && entry.serviceType === 'Vendas');
-    return matchesStatus && matchesMonth && matchesTab;
+                       
+    return matchesStatus && matchesMonth && matchesStartDate && matchesEndDate && matchesOSNumber && matchesTab;
   });
 
   // Calculate Advanced Professional Metrics
@@ -506,7 +522,11 @@ export default function Dashboard() {
     ];
     
     let monthLabel = '';
-    if (monthFilter) {
+    if (startDateFilter || endDateFilter) {
+      const startLabel = startDateFilter ? formatDate(startDateFilter) : 'Início';
+      const endLabel = endDateFilter ? formatDate(endDateFilter) : 'Fim';
+      monthLabel = `${startLabel} até ${endLabel}`;
+    } else if (monthFilter) {
       const [year, month] = monthFilter.split('-');
       monthLabel = `${monthNames[parseInt(month) - 1]} de ${year}`;
     } else {
@@ -549,7 +569,11 @@ export default function Dashboard() {
       'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
     ];
     let monthLabel = 'Todos os meses';
-    if (monthFilter) {
+    if (startDateFilter || endDateFilter) {
+      const startLabel = startDateFilter ? formatDate(startDateFilter) : 'Início';
+      const endLabel = endDateFilter ? formatDate(endDateFilter) : 'Fim';
+      monthLabel = `${startLabel} até ${endLabel}`;
+    } else if (monthFilter) {
       const [year, month] = monthFilter.split('-');
       monthLabel = `${monthNames[parseInt(month) - 1]} de ${year}`;
     }
@@ -1073,11 +1097,49 @@ export default function Dashboard() {
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Lançamentos</h2>
               </div>
 
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap items-center gap-3">
+                {/* OS Number Filter */}
+                <input
+                  type="text"
+                  value={osNumberFilter}
+                  onChange={(e) => setOsNumberFilter(e.target.value)}
+                  placeholder="Filtrar por Nº OS"
+                  className="px-3 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:ring-1 focus:ring-indigo-500 focus:outline-none text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 w-36"
+                />
+
+                {/* Period Date Filters */}
+                <div className="flex items-center gap-1.5 bg-slate-100/50 dark:bg-slate-950/50 px-2.5 py-1.5 border border-slate-200 dark:border-slate-800 rounded-xl">
+                  <input
+                    type="date"
+                    value={startDateFilter}
+                    onChange={(e) => {
+                      setStartDateFilter(e.target.value);
+                      setMonthFilter(''); // Limpa o mês se o usuário escolher período específico
+                    }}
+                    className="bg-transparent border-none text-sm focus:outline-none text-slate-850 dark:text-slate-200 focus:ring-0 focus:ring-transparent"
+                    title="Data Inicial"
+                  />
+                  <span className="text-xs text-slate-400">até</span>
+                  <input
+                    type="date"
+                    value={endDateFilter}
+                    onChange={(e) => {
+                      setEndDateFilter(e.target.value);
+                      setMonthFilter(''); // Limpa o mês se o usuário escolher período específico
+                    }}
+                    className="bg-transparent border-none text-sm focus:outline-none text-slate-850 dark:text-slate-200 focus:ring-0 focus:ring-transparent"
+                    title="Data Final"
+                  />
+                </div>
+
                 {/* Month selector */}
                 <select
                   value={monthFilter}
-                  onChange={(e) => setMonthFilter(e.target.value)}
+                  onChange={(e) => {
+                    setMonthFilter(e.target.value);
+                    setStartDateFilter(''); // Limpa a data inicial
+                    setEndDateFilter(''); // Limpa a data final
+                  }}
                   className="px-3 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:ring-1 focus:ring-indigo-500 focus:outline-none text-slate-800 dark:text-slate-200"
                 >
                   <option value="">Todos os Meses</option>
