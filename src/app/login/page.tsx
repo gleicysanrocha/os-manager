@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword 
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword
 } from 'firebase/auth';
+import { FirebaseError } from 'firebase/app';
 import { auth } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
 import { KeyRound, Mail, UserPlus, LogIn, ClipboardList } from 'lucide-react';
@@ -41,18 +42,22 @@ export default function LoginPage() {
         await signInWithEmailAndPassword(auth, email, password);
         setSuccess('Login realizado com sucesso! Redirecionando...');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-        setError('E-mail ou senha incorretos.');
-      } else if (err.code === 'auth/email-already-in-use') {
-        setError('Este e-mail já está em uso.');
-      } else if (err.code === 'auth/weak-password') {
-        setError('A senha deve ter pelo menos 6 caracteres.');
-      } else if (err.code === 'auth/invalid-email') {
-        setError('E-mail inválido.');
+      if (err instanceof FirebaseError) {
+        if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+          setError('E-mail ou senha incorretos.');
+        } else if (err.code === 'auth/email-already-in-use') {
+          setError('Este e-mail já está em uso.');
+        } else if (err.code === 'auth/weak-password') {
+          setError('A senha deve ter pelo menos 6 caracteres.');
+        } else if (err.code === 'auth/invalid-email') {
+          setError('E-mail inválido.');
+        } else {
+          setError('Ocorreu um erro de autenticação. Verifique suas credenciais.');
+        }
       } else {
-        setError('Ocorreu um erro ao processar sua solicitação. Verifique suas credenciais e sua configuração do Firebase.');
+        setError('Ocorreu um erro inesperado ao processar sua solicitação.');
       }
     } finally {
       setAuthLoading(false);

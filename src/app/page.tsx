@@ -5,7 +5,19 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { db } from '@/lib/firebase';
-import { 
+import {
+  DEFAULT_SERVICE_TYPES,
+  escapeHtml,
+  getLocalDate,
+  isDefaultServiceType,
+  mergeServiceTypes,
+  normalizeServiceTypeName,
+  parseCurrency,
+  type PaymentMethod,
+  type PaymentStatus,
+  type ServiceType,
+} from '@/lib/os';
+import {
   collection, 
   query, 
   where, 
@@ -48,24 +60,12 @@ interface OSEntry {
   osNumber: string;
   value: number;
   notes: string;
-  status: 'Pago' | 'Pendente' | 'Pago Parcialmente';
-  paymentMethod?: 'Pix' | 'Dinheiro' | 'Parcelado' | '';
+  status: PaymentStatus;
+  paymentMethod?: PaymentMethod;
   paymentDate?: string;
   partialAmountPaid?: number;
   userId: string;
 }
-
-interface ServiceType {
-  id: string;
-  name: string;
-  osRequired: boolean;
-}
-
-const DEFAULT_SERVICE_TYPES: ServiceType[] = [
-  { id: '1', name: 'Geração de OS', osRequired: true },
-  { id: '2', name: 'Manutenção', osRequired: false },
-  { id: '3', name: 'Outros', osRequired: false }
-];
 
 export default function Dashboard() {
   const { user, loading, logout } = useAuth();
@@ -83,18 +83,18 @@ export default function Dashboard() {
   const [newTypeOSRequired, setNewTypeOSRequired] = useState(false);
 
   // Form State for new entry
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(getLocalDate());
   const [serviceType, setServiceType] = useState('');
   const [osNumber, setOsNumber] = useState('');
   const [value, setValue] = useState('');
   const [notes, setNotes] = useState('');
-  const [status, setStatus] = useState<'Pago' | 'Pendente' | 'Pago Parcialmente'>('Pendente');
-  const [paymentMethod, setPaymentMethod] = useState<'Pix' | 'Dinheiro' | 'Parcelado' | ''>('');
+  const [status, setStatus] = useState<PaymentStatus>('Pendente');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('');
   const [paymentDate, setPaymentDate] = useState('');
   const [partialAmount, setPartialAmount] = useState('');
 
   // Filter State
-  const [statusFilter, setStatusFilter] = useState<'Todos' | 'Pago' | 'Pendente'>('Todos');
+  const [statusFilter, setStatusFilter] = useState<'Todos' | PaymentStatus>('Todos');
   const [monthFilter, setMonthFilter] = useState<string>(''); // YYYY-MM
   const [startDateFilter, setStartDateFilter] = useState<string>(''); // YYYY-MM-DD
   const [endDateFilter, setEndDateFilter] = useState<string>(''); // YYYY-MM-DD
@@ -120,10 +120,17 @@ export default function Dashboard() {
 
   // Paying entry editor state
   const [payingEntry, setPayingEntry] = useState<OSEntry | null>(null);
-  const [payingStatus, setPayingStatus] = useState<'Pago' | 'Pendente' | 'Pago Parcialmente'>('Pendente');
-  const [payingMethod, setPayingMethod] = useState<'Pix' | 'Dinheiro' | 'Parcelado' | ''>('');
+  const [payingStatus, setPayingStatus] = useState<PaymentStatus>('Pendente');
+  const [payingMethod, setPayingMethod] = useState<PaymentMethod>('');
   const [payingDate, setPayingDate] = useState('');
   const [payingPartialAmount, setPayingPartialAmount] = useState('');
+  const [feedback, setFeedback] = useState<string | null>(null);
+
+  const showError = (message: string, error?: unknown) => {
+    console.error(message, error);
+    setFeedback(message);
+    setTimeout(() => setFeedback(null), 5000);
+  };
 
   useEffect(() => {
     if (!loading && !user) {
@@ -171,21 +178,20 @@ export default function Dashboard() {
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      if (snapshot.empty) {
-        setServiceTypes(DEFAULT_SERVICE_TYPES);
-      } else {
-        const typesList: ServiceType[] = [];
-        snapshot.forEach((doc) => {
+      const typesList: ServiceType[] = [];
+      snapshot.forEach((document) => {
+        const data = document.data();
+        if (typeof data.name === 'string') {
           typesList.push({
-            id: doc.id,
-            name: doc.data().name,
-            osRequired: doc.data().osRequired
+            id: document.id,
+            name: data.name,
+            osRequired: data.osRequired === true,
           });
-        });
-        setServiceTypes(typesList);
-      }
+        }
+      });
+      setServiceTypes(mergeServiceTypes(typesList));
     }, (error) => {
-      console.error("Error loading service types: ", error);
+      showError('Não foi possível carregar os tipos de serviço.', error);
       setServiceTypes(DEFAULT_SERVICE_TYPES);
     });
 
@@ -224,6 +230,7 @@ export default function Dashboard() {
   // Set default service type once loaded
   useEffect(() => {
     if (serviceTypes.length > 0 && !serviceType) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setServiceType(serviceTypes[0].name);
     }
   }, [serviceTypes, serviceType]);
@@ -231,6 +238,7 @@ export default function Dashboard() {
   // Synchronize form serviceType selection when switching spaces (tabs)
   useEffect(() => {
     if (activeTab !== 'Geral') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setServiceType(activeTab);
     }
   }, [activeTab]);
@@ -238,16 +246,17 @@ export default function Dashboard() {
   // Pre-populate default values based on service type
   useEffect(() => {
     if (serviceType === 'Geração de OS') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setValue('10,00');
     } else {
       setValue((prev) => (prev === '10,00' ? '' : prev));
     }
   }, [serviceType]);
 
-  // Set default month filter to current month
+  // Set default month filter to the current local month
   useEffect(() => {
-    const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM
-    setMonthFilter(currentMonth);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMonthFilter(getLocalDate().substring(0, 7));
   }, []);
 
   const handleCreateEntry = async (e: React.FormEvent) => {
@@ -261,24 +270,29 @@ export default function Dashboard() {
       return;
     }
 
-    const parsedValue = parseFloat(value.replace(',', '.'));
-    if (isNaN(parsedValue) || parsedValue <= 0) {
+    const parsedValue = parseCurrency(value);
+    if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
       alert('Insira um valor numérico válido.');
       return;
     }
 
-    const parsedPartialAmount = status === 'Pago Parcialmente' ? parseFloat(partialAmount.replace(',', '.')) : 0;
-    if (status === 'Pago Parcialmente' && (isNaN(parsedPartialAmount) || parsedPartialAmount <= 0 || parsedPartialAmount >= parsedValue)) {
+    const parsedPartialAmount = status === 'Pago Parcialmente' ? parseCurrency(partialAmount) : 0;
+    if (status === 'Pago Parcialmente' && (!Number.isFinite(parsedPartialAmount) || parsedPartialAmount <= 0 || parsedPartialAmount >= parsedValue)) {
       alert('O valor pago parcialmente deve ser maior que 0 e menor que o valor total do serviço.');
+      return;
+    }
+
+    const editingEntry = editingId ? entries.find((entry) => entry.id === editingId) : undefined;
+    if (editingEntry && editingEntry.userId !== user.uid) {
+      showError('Você não tem permissão para editar este lançamento.');
       return;
     }
 
     try {
       const pMethod = status !== 'Pendente' ? (paymentMethod || 'Pix') : '';
-      const pDate = status !== 'Pendente' ? (paymentDate || new Date().toISOString().split('T')[0]) : '';
+      const pDate = status !== 'Pendente' ? (paymentDate || getLocalDate()) : '';
 
       if (editingId) {
-        // Edit existing entry
         const docRef = doc(db, 'os_entries', editingId);
         await updateDoc(docRef, {
           date,
@@ -289,11 +303,10 @@ export default function Dashboard() {
           status,
           paymentMethod: pMethod,
           paymentDate: pDate,
-          partialAmountPaid: parsedPartialAmount
+          partialAmountPaid: parsedPartialAmount,
         });
         setEditingId(null);
       } else {
-        // Create new entry
         await addDoc(collection(db, 'os_entries'), {
           date,
           serviceType,
@@ -305,11 +318,10 @@ export default function Dashboard() {
           paymentDate: pDate,
           partialAmountPaid: parsedPartialAmount,
           userId: user.uid,
-          createdAt: serverTimestamp()
+          createdAt: serverTimestamp(),
         });
       }
 
-      // Clear Form
       setOsNumber('');
       setValue(serviceType === 'Geração de OS' ? '10,00' : '');
       setNotes('');
@@ -318,12 +330,16 @@ export default function Dashboard() {
       setPaymentDate('');
       setPartialAmount('');
     } catch (err) {
-      console.error("Error saving document: ", err);
-      alert('Erro ao salvar lançamento.');
+      showError('Não foi possível salvar o lançamento.', err);
     }
   };
 
   const handleStartEdit = (entry: OSEntry) => {
+    if (!user || entry.userId !== user.uid) {
+      showError('Você não tem permissão para editar este lançamento.');
+      return;
+    }
+
     setEditingId(entry.id);
     setDate(entry.date);
     setServiceType(entry.serviceType);
@@ -348,45 +364,59 @@ export default function Dashboard() {
   };
 
   const handleToggleStatus = (entry: OSEntry) => {
+    if (!user || entry.userId !== user.uid) {
+      showError('Você não tem permissão para atualizar este lançamento.');
+      return;
+    }
+
     setPayingEntry(entry);
     setPayingStatus(entry.status);
     setPayingMethod(entry.paymentMethod || 'Pix');
-    setPayingDate(entry.paymentDate || new Date().toISOString().split('T')[0]);
+    setPayingDate(entry.paymentDate || getLocalDate());
     setPayingPartialAmount(entry.partialAmountPaid ? entry.partialAmountPaid.toString().replace('.', ',') : '');
   };
 
   const handleSavePaymentDetails = async () => {
-    if (!payingEntry) return;
+    if (!payingEntry || !user) return;
+    if (payingEntry.userId !== user.uid) {
+      showError('Você não tem permissão para atualizar este lançamento.');
+      return;
+    }
 
-    const parsedPartial = payingStatus === 'Pago Parcialmente' ? parseFloat(payingPartialAmount.replace(',', '.')) : 0;
-    if (payingStatus === 'Pago Parcialmente' && (isNaN(parsedPartial) || parsedPartial <= 0 || parsedPartial >= payingEntry.value)) {
+    const parsedPartial = payingStatus === 'Pago Parcialmente' ? parseCurrency(payingPartialAmount) : 0;
+    if (payingStatus === 'Pago Parcialmente' && (!Number.isFinite(parsedPartial) || parsedPartial <= 0 || parsedPartial >= payingEntry.value)) {
       alert('O valor pago parcialmente deve ser maior que 0 e menor que o valor total do serviço.');
       return;
     }
 
     try {
       const pMethod = payingStatus !== 'Pendente' ? (payingMethod || 'Pix') : '';
-      const pDate = payingStatus !== 'Pendente' ? (payingDate || new Date().toISOString().split('T')[0]) : '';
+      const pDate = payingStatus !== 'Pendente' ? (payingDate || getLocalDate()) : '';
 
       const docRef = doc(db, 'os_entries', payingEntry.id);
       await updateDoc(docRef, {
         status: payingStatus,
         paymentMethod: pMethod,
         paymentDate: pDate,
-        partialAmountPaid: parsedPartial
+        partialAmountPaid: parsedPartial,
       });
       setPayingEntry(null);
     } catch (err) {
-      console.error("Error updating payment details: ", err);
+      showError('Não foi possível atualizar o pagamento.', err);
     }
   };
 
-  const handleDeleteEntry = async (entryId: string) => {
+  const handleDeleteEntry = async (entry: OSEntry) => {
+    if (!user || entry.userId !== user.uid) {
+      showError('Você não tem permissão para excluir este lançamento.');
+      return;
+    }
     if (!confirm('Deseja realmente excluir este lançamento?')) return;
+
     try {
-      await deleteDoc(doc(db, 'os_entries', entryId));
+      await deleteDoc(doc(db, 'os_entries', entry.id));
     } catch (err) {
-      console.error("Error deleting entry: ", err);
+      showError('Não foi possível excluir o lançamento.', err);
     }
   };
 
@@ -394,34 +424,41 @@ export default function Dashboard() {
     e.preventDefault();
     if (!user || !newTypeName.trim()) return;
 
+    const typeName = newTypeName.trim().replace(/\s+/g, ' ');
+    if (serviceTypes.some((type) => normalizeServiceTypeName(type.name) === normalizeServiceTypeName(typeName))) {
+      setFeedback('Já existe um tipo de serviço com esse nome.');
+      return;
+    }
+
     try {
       await addDoc(collection(db, 'service_types'), {
-        name: newTypeName.trim(),
+        name: typeName,
         osRequired: newTypeOSRequired,
         userId: user.uid,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
       });
       setNewTypeName('');
       setNewTypeOSRequired(false);
     } catch (err) {
-      console.error("Error adding service type: ", err);
+      showError('Não foi possível adicionar o tipo de serviço.', err);
     }
   };
 
-  const handleDeleteServiceType = async (typeId: string, typeName: string) => {
-    if (['1', '2', '3'].includes(typeId)) {
+  const handleDeleteServiceType = async (type: ServiceType) => {
+    if (isDefaultServiceType(type)) {
       alert('Os tipos padrão não podem ser removidos.');
       return;
     }
-    if (!confirm(`Deseja remover o tipo de serviço "${typeName}"?`)) return;
+    if (!confirm(`Deseja remover o tipo de serviço "${type.name}"?`)) return;
 
     try {
-      await deleteDoc(doc(db, 'service_types', typeId));
-      if (serviceType === typeName) {
-        setServiceType(serviceTypes[0]?.name || '');
+      await deleteDoc(doc(db, 'service_types', type.id));
+      if (serviceType === type.name) {
+        const nextType = serviceTypes.find((candidate) => candidate.id !== type.id);
+        setServiceType(nextType?.name || '');
       }
     } catch (err) {
-      console.error("Error deleting service type: ", err);
+      showError('Não foi possível remover o tipo de serviço.', err);
     }
   };
 
@@ -433,12 +470,12 @@ export default function Dashboard() {
       await addDoc(collection(db, 'quick_notes'), {
         text: newQuickNote.trim(),
         userId: user.uid,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
       });
       setNewQuickNote('');
       setShowAddQuickNote(false);
     } catch (err) {
-      console.error("Error adding quick note: ", err);
+      showError('Não foi possível salvar o modelo de observação.', err);
     }
   };
 
@@ -460,8 +497,8 @@ export default function Dashboard() {
     
     // Filtro por Mês (ignorado se houver filtro de data específica)
     const entryMonth = entry.date.substring(0, 7); // YYYY-MM
-    const matchesMonth = !monthFilter || entryMonth === monthFilter;
-    
+    const matchesMonth = (startDateFilter || endDateFilter) || !monthFilter || entryMonth === monthFilter;
+
     // Filtro por Data Inicial (se fornecido)
     const matchesStartDate = !startDateFilter || entry.date >= startDateFilter;
     
@@ -480,25 +517,15 @@ export default function Dashboard() {
 
   // Sort entries
   const sortedEntries = [...filteredEntries].sort((a, b) => {
-    let valA: any = a[sortField];
-    let valB: any = b[sortField];
-
-    if (valA === undefined || valA === null) valA = '';
-    if (valB === undefined || valB === null) valB = '';
-
-    if (typeof valA === 'string' && typeof valB === 'string') {
-      return sortDirection === 'asc' 
-        ? valA.localeCompare(valB) 
-        : valB.localeCompare(valA);
-    }
+    const valA = a[sortField];
+    const valB = b[sortField];
+    const direction = sortDirection === 'asc' ? 1 : -1;
 
     if (typeof valA === 'number' && typeof valB === 'number') {
-      return sortDirection === 'asc' ? valA - valB : valB - valA;
+      return (valA - valB) * direction;
     }
 
-    return sortDirection === 'asc'
-      ? String(valA).localeCompare(String(valB))
-      : String(valB).localeCompare(String(valA));
+    return String(valA ?? '').localeCompare(String(valB ?? '')) * direction;
   });
 
   const handleSort = (field: 'date' | 'serviceType' | 'value' | 'notes' | 'status') => {
@@ -519,12 +546,9 @@ export default function Dashboard() {
       : <ArrowDown className="inline h-3.5 w-3.5 ml-1 text-indigo-500" />;
   };
 
-  // Calculate Advanced Professional Metrics
+  // Calculate Metrics
   const countEntries = filteredEntries.length;
   const avgTicket = countEntries > 0 ? filteredEntries.reduce((sum, e) => sum + e.value, 0) / countEntries : 0;
-  const paymentRate = countEntries > 0 ? (filteredEntries.filter(e => e.status === 'Pago').length / countEntries) * 100 : 0;
-
-  // Calculate Metrics
   const totalMonth = filteredEntries.reduce((sum, entry) => sum + entry.value, 0);
 
   const totalPaid = filteredEntries.reduce((sum, entry) => {
@@ -536,22 +560,15 @@ export default function Dashboard() {
     return sum;
   }, 0);
 
-  const totalPending = filteredEntries.reduce((sum, entry) => {
-    if (entry.status === 'Pendente') {
-      return sum + entry.value;
-    } else if (entry.status === 'Pago Parcialmente') {
-      const remaining = entry.value - (entry.partialAmountPaid || 0);
-      return sum + Math.max(0, remaining);
-    }
-    return sum;
-  }, 0);
+  const totalPending = totalMonth - totalPaid;
+  const paymentRate = totalMonth > 0 ? (totalPaid / totalMonth) * 100 : 0;
 
   // Get distinct months for filter
   const distinctMonths = Array.from(
     new Set(entries.map(e => e.date.substring(0, 7)))
   ).sort((a, b) => b.localeCompare(a)); // Descending order
 
-  const currentMonthStr = new Date().toISOString().substring(0, 7);
+  const currentMonthStr = getLocalDate().substring(0, 7);
   if (!distinctMonths.includes(currentMonthStr)) {
     distinctMonths.unshift(currentMonthStr);
   }
@@ -604,7 +621,7 @@ export default function Dashboard() {
       setCopiedMessage(true);
       setTimeout(() => setCopiedMessage(false), 3000);
     }).catch(err => {
-      console.error('Could not copy text: ', err);
+      showError('Não foi possível copiar a cobrança.', err);
     });
   };
 
@@ -627,6 +644,8 @@ export default function Dashboard() {
     }
 
     const reportTitle = `Relatório de Serviços: ${activeTab}`;
+    const safeReportTitle = escapeHtml(reportTitle);
+    const safeMonthLabel = escapeHtml(monthLabel);
     const entriesRows = filteredEntries.map(entry => {
       let statusDetail: string = entry.status;
       if (entry.status === 'Pago Parcialmente' && entry.partialAmountPaid !== undefined) {
@@ -634,18 +653,18 @@ export default function Dashboard() {
       }
       return `
         <tr>
-          <td style="padding: 10px; border-bottom: 1px solid #eee;">${formatDate(entry.date)}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #eee;">${entry.serviceType}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #eee; font-family: monospace;">${entry.osNumber || '-'}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">${formatCurrency(entry.value)}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #eee; color: #555;">${entry.notes || '-'}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee;">${escapeHtml(formatDate(entry.date))}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee;">${escapeHtml(entry.serviceType)}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; font-family: monospace;">${escapeHtml(entry.osNumber || '-')}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">${escapeHtml(formatCurrency(entry.value))}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; color: #555;">${escapeHtml(entry.notes || '-')}</td>
           <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">
             <span style="padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; background-color: ${
               entry.status === 'Pago' ? '#DEF7EC' : entry.status === 'Pago Parcialmente' ? '#E1F5FE' : '#FEF08A'
             }; color: ${
               entry.status === 'Pago' ? '#03543F' : entry.status === 'Pago Parcialmente' ? '#0277BD' : '#713F12'
             }">
-              ${statusDetail}
+              ${escapeHtml(statusDetail)}
             </span>
           </td>
         </tr>
@@ -655,7 +674,7 @@ export default function Dashboard() {
     printWindow.document.write(`
       <html>
         <head>
-          <title>${reportTitle}</title>
+          <title>${safeReportTitle}</title>
           <style>
             body { font-family: system-ui, -apple-system, sans-serif; color: #1e293b; padding: 40px; line-height: 1.5; }
             .header { border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 30px; }
@@ -677,8 +696,8 @@ export default function Dashboard() {
         </head>
         <body>
           <div class="header">
-            <h1>${reportTitle}</h1>
-            <p class="meta">Gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')} | Período: ${monthLabel}</p>
+            <h1>${safeReportTitle}</h1>
+            <p class="meta">Gerado em ${escapeHtml(new Date().toLocaleDateString('pt-BR'))} às ${escapeHtml(new Date().toLocaleTimeString('pt-BR'))} | Período: ${safeMonthLabel}</p>
           </div>
           
           <div class="kpis">
@@ -746,6 +765,15 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-300 flex flex-col">
+      {feedback && (
+        <div className="fixed bottom-4 right-4 z-50 bg-rose-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center justify-between gap-4 animate-fade-in">
+          <span className="text-sm font-medium">{feedback}</span>
+          <button onClick={() => setFeedback(null)} className="text-white/80 hover:text-white">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <header className="border-b border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -783,7 +811,13 @@ export default function Dashboard() {
             </button>
 
             <button
-              onClick={logout}
+              onClick={async () => {
+                try {
+                  await logout();
+                } catch (err) {
+                  showError('Não foi possível sair da conta.', err);
+                }
+              }}
               className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-rose-500 dark:text-rose-455 hover:text-rose-600 dark:hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition duration-200"
             >
               <LogOut className="h-4 w-4" />
@@ -1050,7 +1084,7 @@ export default function Dashboard() {
                       onClick={() => {
                         setStatus(s);
                         if (s !== 'Pendente' && !paymentDate) {
-                          setPaymentDate(new Date().toISOString().split('T')[0]);
+                          setPaymentDate(getLocalDate());
                         }
                       }}
                       className={`py-2 text-[10px] font-semibold rounded-xl border transition-all truncate ${
@@ -1075,7 +1109,7 @@ export default function Dashboard() {
                     <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Método</label>
                     <select
                       value={paymentMethod || 'Pix'}
-                      onChange={(e) => setPaymentMethod(e.target.value as any)}
+                      onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
                       className="mt-1.5 block w-full px-2.5 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-slate-800 dark:text-slate-200 text-xs"
                     >
                       <option value="Pix">Pix</option>
@@ -1365,7 +1399,7 @@ export default function Dashboard() {
                             <Pencil className="h-4 w-4" />
                           </button>
                           <button
-                            onClick={() => handleDeleteEntry(entry.id)}
+                            onClick={() => handleDeleteEntry(entry)}
                             className="p-1 text-slate-400 hover:text-rose-500 dark:text-slate-550 dark:hover:text-rose-400 rounded transition duration-200 md:opacity-0 md:group-hover:opacity-100"
                             title="Excluir lançamento"
                           >
@@ -1416,7 +1450,7 @@ export default function Dashboard() {
                   {!['1', '2', '3'].includes(type.id) ? (
                     <button
                       type="button"
-                      onClick={() => handleDeleteServiceType(type.id, type.name)}
+                      onClick={() => handleDeleteServiceType(type)}
                       className="p-1 text-slate-500 hover:text-rose-500 transition"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -1509,7 +1543,7 @@ export default function Dashboard() {
                     <label className="block text-xs font-medium text-slate-555 dark:text-slate-400 tracking-wider">Método</label>
                     <select
                       value={payingMethod || 'Pix'}
-                      onChange={(e) => setPayingMethod(e.target.value as any)}
+                      onChange={(e) => setPayingMethod(e.target.value as PaymentMethod)}
                       className="mt-1.5 block w-full px-2.5 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-slate-800 dark:text-slate-200 text-xs"
                     >
                       <option value="Pix">Pix</option>
